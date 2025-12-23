@@ -1,4 +1,4 @@
-source("shannen/helpers.R")
+source("shannen/cpp_compile.R")
 reload_cpp(".", compile_attrs = TRUE)
 
 library(Racmacs)
