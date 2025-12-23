@@ -431,22 +431,32 @@ template <>
 AcOptimizerOptions as(SEXP sxp){
 
   List opt = as<List>(sxp);
-  return AcOptimizerOptions{
-    opt["dim_annealing"],
-    opt["method"],
-    opt["maxit"],
-    opt["num_basis"],
-    opt["armijo_constant"],
-    opt["wolfe"],
-    opt["min_gradient_norm"],
-    opt["factr"],
-    opt["max_line_search_trials"],
-    opt["min_step"],
-    opt["max_step"],
-    opt["num_cores"],
-    opt["report_progress"],
-    opt["progress_bar_length"]
-  };
+  
+  AcOptimizerOptions options;
+  
+  options.dim_annealing = opt["dim_annealing"];
+  options.method = Rcpp::as<std::string>(opt["method"]);
+  options.maxit = opt["maxit"];
+  options.num_basis = opt["num_basis"];
+  options.armijo_constant = opt["armijo_constant"];
+  options.wolfe = opt["wolfe"];
+  options.min_gradient_norm = opt["min_gradient_norm"];
+  options.factr = opt["factr"];
+  options.max_line_search_trials = opt["max_line_search_trials"];
+  options.min_step = opt["min_step"];
+  options.max_step = opt["max_step"];
+  options.num_cores = opt["num_cores"];
+  options.report_progress = opt["report_progress"];
+  options.progress_bar_length = opt["progress_bar_length"];
+  
+  // NEW: Handle optimize_colbases with backward compatibility
+  if (opt.containsElementNamed("optimize_colbases")) {
+    options.optimize_colbases = opt["optimize_colbases"];
+  } else {
+    options.optimize_colbases = false;
+  }
+  
+  return options;
 
 }
 

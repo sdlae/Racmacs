@@ -271,9 +271,10 @@ RacOptimizer.options <- function(
   min_step = 1e-20,
   max_step = 1e20,
   num_cores = getOption("RacOptimizer.num_cores"),
-  report_progress = NULL,
+  report_progress = TRUE,
   ignore_disconnected = FALSE,
-  progress_bar_length = options()$width
+  progress_bar_length = options()$width,
+  optimize_colbases = FALSE
 ) {
 
   # Check input
@@ -317,7 +318,8 @@ RacOptimizer.options <- function(
     num_cores = num_cores,
     ignore_disconnected = ignore_disconnected,
     report_progress = report_progress,
-    progress_bar_length = progress_bar_length
+    progress_bar_length = progress_bar_length,
+    optimize_colbases = optimize_colbases
   )
 
 }

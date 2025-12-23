@@ -17,15 +17,15 @@ bool compare_optimization_stress(
 }
 
 void sort_optimizations_by_stress(
-    std::vector<AcOptimization> &optimizations
+    std::vector<AcOptimization>& optimizations
 ){
-
-  sort(
+  std::sort(
     optimizations.begin(),
     optimizations.end(),
-    compare_optimization_stress
+    [](const AcOptimization& a, const AcOptimization& b) {
+      return a.stress < b.stress;
+    }
   );
-
 }
 
 

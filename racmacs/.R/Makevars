@@ -1,0 +1,6 @@
+CC=/opt/local/bin/gcc-mp-4.7
+CXX=/opt/local/bin/g++-mp-4.7
+CPLUS_INCLUDE_PATH=/opt/local/include:$CPLUS_INCLUDE_PATH
+LD_LIBRARY_PATH=/opt/local/lib:$LD_LIBRARY_PATH
+CXXFLAGS= -g0 -O2 -Wall
+MAKE=make -j4

@@ -1611,6 +1611,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ac_relax_coords_with_colbases
+Rcpp::List ac_relax_coords_with_colbases(const arma::mat& logtiter_matrix, const arma::imat& titertype_matrix, arma::mat& ag_coords, arma::mat& sr_coords, arma::vec& colbases, const AcOptimizerOptions& options, const arma::uvec& fixed_antigens, const arma::uvec& fixed_sera, const arma::mat& titer_weights, const double& dilution_stepsize);
+RcppExport SEXP _Racmacs_ac_relax_coords_with_colbases(SEXP logtiter_matrixSEXP, SEXP titertype_matrixSEXP, SEXP ag_coordsSEXP, SEXP sr_coordsSEXP, SEXP colbasesSEXP, SEXP optionsSEXP, SEXP fixed_antigensSEXP, SEXP fixed_seraSEXP, SEXP titer_weightsSEXP, SEXP dilution_stepsizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type logtiter_matrix(logtiter_matrixSEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type titertype_matrix(titertype_matrixSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type ag_coords(ag_coordsSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type sr_coords(sr_coordsSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type colbases(colbasesSEXP);
+    Rcpp::traits::input_parameter< const AcOptimizerOptions& >::type options(optionsSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type fixed_antigens(fixed_antigensSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type fixed_sera(fixed_seraSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type titer_weights(titer_weightsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type dilution_stepsize(dilution_stepsizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(ac_relax_coords_with_colbases(logtiter_matrix, titertype_matrix, ag_coords, sr_coords, colbases, options, fixed_antigens, fixed_sera, titer_weights, dilution_stepsize));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ac_runOptimizations
 std::vector<AcOptimization> ac_runOptimizations(const AcTiterTable& titertable, const std::string& minimum_col_basis, const arma::vec& fixed_colbases, const arma::vec& ag_reactivity_adjustments, const arma::uword& num_dims, const arma::uword& num_optimizations, const AcOptimizerOptions& options, const arma::mat& titer_weights, const double& dilution_stepsize);
 RcppExport SEXP _Racmacs_ac_runOptimizations(SEXP titertableSEXP, SEXP minimum_col_basisSEXP, SEXP fixed_colbasesSEXP, SEXP ag_reactivity_adjustmentsSEXP, SEXP num_dimsSEXP, SEXP num_optimizationsSEXP, SEXP optionsSEXP, SEXP titer_weightsSEXP, SEXP dilution_stepsizeSEXP) {
@@ -2026,6 +2046,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_Racmacs_ac_point_stresses", (DL_FUNC) &_Racmacs_ac_point_stresses, 6},
     {"_Racmacs_ac_point_residuals", (DL_FUNC) &_Racmacs_ac_point_residuals, 2},
     {"_Racmacs_ac_relax_coords", (DL_FUNC) &_Racmacs_ac_relax_coords, 9},
+    {"_Racmacs_ac_relax_coords_with_colbases", (DL_FUNC) &_Racmacs_ac_relax_coords_with_colbases, 10},
     {"_Racmacs_ac_runOptimizations", (DL_FUNC) &_Racmacs_ac_runOptimizations, 9},
     {"_Racmacs_ac_reactivity_adjustment_stress", (DL_FUNC) &_Racmacs_ac_reactivity_adjustment_stress, 15},
     {"_Racmacs_ac_stress_blob_grid", (DL_FUNC) &_Racmacs_ac_stress_blob_grid, 7},

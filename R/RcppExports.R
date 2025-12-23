@@ -565,6 +565,10 @@ ac_relax_coords <- function(tabledist_matrix, titertype_matrix, ag_coords, sr_co
     .Call('_Racmacs_ac_relax_coords', PACKAGE = 'Racmacs', tabledist_matrix, titertype_matrix, ag_coords, sr_coords, options, fixed_antigens, fixed_sera, titer_weights, dilution_stepsize)
 }
 
+ac_relax_coords_with_colbases <- function(logtiter_matrix, titertype_matrix, ag_coords, sr_coords, colbases, options, fixed_antigens, fixed_sera, titer_weights, dilution_stepsize) {
+    .Call('_Racmacs_ac_relax_coords_with_colbases', PACKAGE = 'Racmacs', logtiter_matrix, titertype_matrix, ag_coords, sr_coords, colbases, options, fixed_antigens, fixed_sera, titer_weights, dilution_stepsize)
+}
+
 ac_runOptimizations <- function(titertable, minimum_col_basis, fixed_colbases, ag_reactivity_adjustments, num_dims, num_optimizations, options, titer_weights, dilution_stepsize) {
     .Call('_Racmacs_ac_runOptimizations', PACKAGE = 'Racmacs', titertable, minimum_col_basis, fixed_colbases, ag_reactivity_adjustments, num_dims, num_optimizations, options, titer_weights, dilution_stepsize)
 }

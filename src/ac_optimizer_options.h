@@ -20,6 +20,10 @@ struct AcOptimizerOptions {
   bool report_progress;
   int progress_bar_length;
 
+  // NEW: Toggle for optimizing column bases
+  // When true, column bases become parameters to optimize alongside coordinates
+  // When false (default), column bases are fixed at 0 (current behavior)
+  bool optimize_colbases = false;
 };
 
 #endif
