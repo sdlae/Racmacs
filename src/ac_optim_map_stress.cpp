@@ -974,16 +974,11 @@ std::vector<AcOptimization> ac_runOptimizations(
   arma::imat titertype_matrix = titertable.get_titer_types();
 
   // Set initial column bases
-  arma::vec initial_colbases;
-  if (optimize_colbases) {
-    initial_colbases = arma::zeros<arma::vec>(num_sr);
-  } else {
-    initial_colbases = titertable.calc_colbases(
-      minimum_col_basis,
-      fixed_colbases,
-      ag_reactivity_adjustments
-    );
-  }
+  arma::vec initial_colbases = titertable.calc_colbases(
+    minimum_col_basis,
+    fixed_colbases,
+    ag_reactivity_adjustments
+  );
 
   // Compute initial table distance matrix
   arma::mat tabledist_matrix(num_ags, num_sr);
