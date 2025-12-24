@@ -8,12 +8,11 @@ options(RacOptimizer.num_cores = parallel::detectCores())
 # CONFIGURATION
 # ==============================================================================
 
-N_DIM <- 2                    # Number of dimensions
+N_DIM <- 5                    # Number of dimensions
 N_OPTIMIZATIONS <- 500        # Number of optimization runs
 BLIND_FRACTION <- 0.15        # Fraction of data held out for testing
 MIN_COLUMN_BASIS <- "none"    # Minimum column basis
 RANDOM_SEED <- 42             # For reproducibility
-MAX_PREDICTION_DISTANCE <- 10 # Maximum distance for valid predictions
 
 source("shannen/accuracy_helpers.R")
 
@@ -53,7 +52,7 @@ cat("Column bases summary:\n")
 print(summary(colbases_fixed))
 
 cat("\nPredicting blind titers...\n")
-pred_fixed <- predict_titers(map_fixed, blind_test$blind, max_distance = MAX_PREDICTION_DISTANCE)
+pred_fixed <- predict_titers(map_fixed, blind_test$blind)
 stats_fixed <- calculate_error_stats(pred_fixed, blind_test$blind)
 
 cat(sprintf("Prediction accuracy (fixed colbases):\n"))
@@ -86,7 +85,7 @@ cat(sprintf("\nStress: %.4f\n", stress_optimized))
 cat("Column bases summary:\n")
 print(summary(colbases_optimized))
 
-pred_optimized <- predict_titers(map_optimized, blind_test$blind, max_distance = MAX_PREDICTION_DISTANCE)
+pred_optimized <- predict_titers(map_optimized, blind_test$blind)
 stats_optimized <- calculate_error_stats(pred_optimized, blind_test$blind)
 
 cat(sprintf("Prediction accuracy (optimized colbases):\n"))

@@ -79,7 +79,7 @@ prepare_blind_test <- function(titer_matrix, blind_fraction = 0.2, min_blind = 1
 }
 
 #' Predict titers using map coordinates and column bases
-predict_titers <- function(map, blind_data, col_bases = NULL, max_distance = 10) {
+predict_titers <- function(map, blind_data, col_bases = NULL) {
   ag_coords <- agCoords(map)
   sr_coords <- srCoords(map)
   
@@ -112,23 +112,15 @@ predict_titers <- function(map, blind_data, col_bases = NULL, max_distance = 10)
       distance <- sqrt(sum((ag_pos - sr_pos)^2))
       distances[i] <- distance
       
-      # Skip if distance is too large
-      if (distance > max_distance) {
-        predictions[i] <- NA
-        errors[i] <- NA
-        valid[i] <- FALSE
-      } else {
-        # Predict titer: predicted_log2 = column_base - distance
-        predicted_log2 <- col_bases[sr_idx] - distance
-        predicted_log2 <- max(0, min(predicted_log2, 15))  # Reasonable bounds
-        
-        predictions[i] <- 10 * 2^predicted_log2
-        
-        # Calculate error in log2 units
-        actual_log2 <- log2(blind_data$actual[i] / 10)
-        errors[i] <- abs(predicted_log2 - actual_log2)
-        valid[i] <- TRUE
-      }
+      predicted_log2 <- col_bases[sr_idx] - distance
+      predicted_log2 <- max(0, min(predicted_log2, 15))  # Reasonable bounds
+      
+      predictions[i] <- 10 * 2^predicted_log2
+      
+      # Calculate error in log2 units
+      actual_log2 <- log2(blind_data$actual[i] / 10)
+      errors[i] <- abs(predicted_log2 - actual_log2)
+      valid[i] <- TRUE
     }
   }
   
