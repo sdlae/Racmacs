@@ -274,7 +274,13 @@ RacOptimizer.options <- function(
   report_progress = TRUE,
   ignore_disconnected = FALSE,
   progress_bar_length = options()$width,
-  optimize_colbases = FALSE
+  optimize_colbases = FALSE,
+  bound_colbases = FALSE,
+  colbase_min_bound = 4.0,
+  colbase_max_bound = 14.0,
+  colbase_max_deviation = 5.0,
+  regularize_colbases = FALSE,
+  colbase_lambda = 0.1
 ) {
 
   # Check input
@@ -285,6 +291,15 @@ RacOptimizer.options <- function(
   check.numeric(progress_bar_length)
   if (!is.null(report_progress)) check.logical(report_progress)
   if (!is.null(num_cores)) check.integer(num_cores)
+  
+  # Check new column base options
+  check.logical(optimize_colbases)
+  check.logical(bound_colbases)
+  check.numeric(colbase_min_bound)
+  check.numeric(colbase_max_bound)
+  check.numeric(colbase_max_deviation)
+  check.logical(regularize_colbases)
+  check.numeric(colbase_lambda)
 
   # Set default number of cores to 2
   if (is.null(num_cores)) {
@@ -319,7 +334,13 @@ RacOptimizer.options <- function(
     ignore_disconnected = ignore_disconnected,
     report_progress = report_progress,
     progress_bar_length = progress_bar_length,
-    optimize_colbases = optimize_colbases
+    optimize_colbases = optimize_colbases,
+    bound_colbases = bound_colbases,
+    colbase_min_bound = colbase_min_bound,
+    colbase_max_bound = colbase_max_bound,
+    colbase_max_deviation = colbase_max_deviation,
+    regularize_colbases = regularize_colbases,
+    colbase_lambda = colbase_lambda
   )
 
 }

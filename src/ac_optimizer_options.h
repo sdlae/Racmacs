@@ -20,10 +20,18 @@ struct AcOptimizerOptions {
   bool report_progress;
   int progress_bar_length;
 
-  // NEW: Toggle for optimizing column bases
-  // When true, column bases become parameters to optimize alongside coordinates
-  // When false (default), column bases are fixed at 0 (current behavior)
+  // Column base optimization options
   bool optimize_colbases = false;
+  
+  // NEW: Bounded column bases
+  bool bound_colbases = false;           // Enable hard bounds on column bases
+  double colbase_min_bound = 4.0;        // Minimum column base (log2 scale, 4 = titer 160)
+  double colbase_max_bound = 14.0;       // Maximum column base (log2 scale, 14 = titer 163840)
+  double colbase_max_deviation = 5.0;    // Max deviation from initial value (0 = no limit)
+  
+  // NEW: Regularized column bases  
+  bool regularize_colbases = false;      // Enable regularization penalty
+  double colbase_lambda = 0.1;           // Regularization strength (0 = no penalty)
 };
 
 #endif

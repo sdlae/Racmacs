@@ -455,6 +455,43 @@ AcOptimizerOptions as(SEXP sxp){
   } else {
     options.optimize_colbases = false;
   }
+
+  if (opt.containsElementNamed("bound_colbases")) {
+    options.bound_colbases = opt["bound_colbases"];
+  } else {
+    options.bound_colbases = false;
+  }
+  
+  if (opt.containsElementNamed("colbase_min_bound")) {
+    options.colbase_min_bound = opt["colbase_min_bound"];
+  } else {
+    options.colbase_min_bound = 4.0;
+  }
+  
+  if (opt.containsElementNamed("colbase_max_bound")) {
+    options.colbase_max_bound = opt["colbase_max_bound"];
+  } else {
+    options.colbase_max_bound = 14.0;
+  }
+  
+  if (opt.containsElementNamed("colbase_max_deviation")) {
+    options.colbase_max_deviation = opt["colbase_max_deviation"];
+  } else {
+    options.colbase_max_deviation = 5.0;
+  }
+  
+  // Handle regularized column bases
+  if (opt.containsElementNamed("regularize_colbases")) {
+    options.regularize_colbases = opt["regularize_colbases"];
+  } else {
+    options.regularize_colbases = false;
+  }
+  
+  if (opt.containsElementNamed("colbase_lambda")) {
+    options.colbase_lambda = opt["colbase_lambda"];
+  } else {
+    options.colbase_lambda = 0.1;
+  }
   
   return options;
 

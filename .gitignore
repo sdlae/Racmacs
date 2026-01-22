@@ -2,6 +2,8 @@
 .Rproj.user
 .Rhistory
 .RData
+.rds
+.txt
 .Rapp.history
 .DS_Store
 .clang-format

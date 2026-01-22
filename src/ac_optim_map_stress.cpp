@@ -1,5 +1,6 @@
 // src/ac_optim_map_stress.cpp
 // CORRECTED VERSION - Fixed forward declarations and removed duplicate functions
+// MODIFIED: Added separate base_stress and penalty_stress tracking
 
 #include <math.h>
 #include <RcppArmadillo.h>
@@ -123,6 +124,19 @@ class MapOptimizer {
     double dilution_stepsize;
     double gradient;
     double stress;
+    
+    // NEW: Separate stress components for tracking
+    double base_stress;      // Stress from map fitting only (without regularization)
+    double penalty_stress;   // Regularization penalty only
+
+    // NEW: Column base constraints
+    arma::vec initial_colbases_reference;  // Store initial values for regularization
+    double colbase_min_bound;
+    double colbase_max_bound;
+    double colbase_max_deviation;
+    double colbase_lambda;
+    bool bound_colbases;
+    bool regularize_colbases;
 
     // ========================================================================
     // CONSTRUCTOR 1: Basic constructor (backward compatible, no colbase optimization)
@@ -143,7 +157,9 @@ class MapOptimizer {
        num_ags(tabledist.n_rows),
        num_sr(tabledist.n_cols),
        dilution_stepsize(dilution_stepsize_in),
-       optimize_colbases(false)
+       optimize_colbases(false),
+       base_stress(0),
+       penalty_stress(0)
     {
       // Set default moveable antigens and sera to all
       moveable_ags = arma::regspace<arma::uvec>(0, num_ags - 1);
@@ -191,7 +207,9 @@ class MapOptimizer {
        num_ags(tabledist.n_rows),
        num_sr(tabledist.n_cols),
        dilution_stepsize(dilution_stepsize_in),
-       optimize_colbases(false)
+       optimize_colbases(false),
+       base_stress(0),
+       penalty_stress(0)
     {
       // Set default weights to 1 if missing
       if (titer_weights_in.n_elem == 0) titer_weights.ones(num_ags, num_sr);
@@ -232,18 +250,34 @@ class MapOptimizer {
       arma::uvec sr_fixed,
       arma::mat titer_weights_in,
       double dilution_stepsize_in,
-      bool optimize_colbases_in
+      bool optimize_colbases_in,
+      // NEW parameters:
+      bool bound_colbases_in = false,
+      double colbase_min_bound_in = 4.0,
+      double colbase_max_bound_in = 14.0,
+      double colbase_max_deviation_in = 5.0,
+      bool regularize_colbases_in = false,
+      double colbase_lambda_in = 0.1
     )
       :ag_coords(ag_start_coords),
        sr_coords(sr_start_coords),
        logtiter_matrix(logtiter_matrix_in),
        colbases(initial_colbases),
+       initial_colbases_reference(initial_colbases),  // Store for regularization
        titertype_matrix(titertype),
        num_dims(dims),
        num_ags(logtiter_matrix_in.n_rows),
        num_sr(logtiter_matrix_in.n_cols),
        dilution_stepsize(dilution_stepsize_in),
-       optimize_colbases(optimize_colbases_in)
+       optimize_colbases(optimize_colbases_in),
+       base_stress(0),
+       penalty_stress(0),
+       bound_colbases(bound_colbases_in),
+       colbase_min_bound(colbase_min_bound_in),
+       colbase_max_bound(colbase_max_bound_in),
+       colbase_max_deviation(colbase_max_deviation_in),
+       regularize_colbases(regularize_colbases_in),
+       colbase_lambda(colbase_lambda_in)
     {
       // Set default weights
       if (titer_weights_in.n_elem == 0) titer_weights.ones(num_ags, num_sr);
@@ -279,6 +313,7 @@ class MapOptimizer {
       // Update the map distance matrix according to coordinates
       update_map_dist_matrix();
     }
+
 
     // ========================================================================
     // EVALUATE OBJECTIVE FUNCTION
@@ -388,6 +423,12 @@ class MapOptimizer {
             colbase_gradients(sr) += weight * grad;
           }
         }
+        
+        // NEW: Add regularization gradient
+        if (regularize_colbases && colbase_lambda > 0) {
+          colbase_gradients(sr) += 2.0 * colbase_lambda * 
+                                   (colbases(sr) - initial_colbases_reference(sr));
+        }
       }
     }
 
@@ -410,37 +451,62 @@ class MapOptimizer {
     // UPDATE PARAMETERS (coordinates and optionally column bases)
     // ========================================================================
     void update_parameters(const arma::mat &pars) {
+      // Update antigen coordinates (unchanged)
       for (arma::uword j = 0; j < num_dims; ++j) {
         for (arma::uword i = 0; i < moveable_ags.n_elem; ++i) {
           ag_coords.at(moveable_ags(i), j) = pars.at(i, j);
         }
       }
 
+      // Update serum coordinates (unchanged)
       for (arma::uword j = 0; j < num_dims; ++j) {
         for (arma::uword i = 0; i < moveable_sr.n_elem; ++i) {
           sr_coords.at(moveable_sr(i), j) = pars.at(i + moveable_ags.n_elem, j);
         }
       }
 
+      // Update column bases with optional bounds
       if (optimize_colbases) {
         arma::uword coord_rows = moveable_ags.n_elem + moveable_sr.n_elem;
         for (arma::uword i = 0; i < moveable_colbases.n_elem; ++i) {
-          colbases(moveable_colbases(i)) = pars.at(coord_rows + i, 0);
+          arma::uword sr_idx = moveable_colbases(i);
+          double new_cb = pars.at(coord_rows + i, 0);
+          
+          // Apply bounds if enabled
+          if (bound_colbases) {
+            // Calculate effective bounds
+            double effective_min = colbase_min_bound;
+            double effective_max = colbase_max_bound;
+            
+            // If max_deviation is set, also constrain relative to initial
+            if (colbase_max_deviation > 0) {
+              double init_cb = initial_colbases_reference(sr_idx);
+              effective_min = std::max(effective_min, init_cb - colbase_max_deviation);
+              effective_max = std::min(effective_max, init_cb + colbase_max_deviation);
+            }
+            
+            // Clamp to bounds
+            new_cb = std::max(effective_min, std::min(effective_max, new_cb));
+          }
+          
+          colbases(sr_idx) = new_cb;
         }
       }
     }
 
     // ========================================================================
-    // CALCULATE STRESS
+    // CALCULATE STRESS - MODIFIED to track base_stress and penalty_stress separately
     // ========================================================================
-    double calculate_stress(){
-      stress = 0;
-
+    double calculate_stress() {
+      // Reset both components
+      base_stress = 0;
+      penalty_stress = 0;
+      
+      // Original stress calculation (map fitting only)
       for(sri = included_srs.begin(); sri != sri_end; ++sri) {
         for(agi = included_ags.begin(); agi != agi_end; ++agi) {
           if(titertype_matrix.at(*agi,*sri) <= 0) continue;
-
-          stress += titer_weights.at(*agi,*sri) * ac_ptStress(
+          base_stress += titer_weights.at(*agi,*sri) * ac_ptStress(
             mapdist_matrix.at(*agi,*sri),
             tabledist_matrix.at(*agi,*sri),
             titertype_matrix.at(*agi,*sri),
@@ -448,7 +514,32 @@ class MapOptimizer {
           );
         }
       }
+      
+      // Calculate regularization penalty separately (if enabled)
+      if (optimize_colbases && regularize_colbases && colbase_lambda > 0) {
+        for (arma::uword sr = 0; sr < num_sr; ++sr) {
+          double cb_deviation = colbases(sr) - initial_colbases_reference(sr);
+          penalty_stress += colbase_lambda * cb_deviation * cb_deviation;
+        }
+      }
+      
+      // Total stress is the sum of both components
+      stress = base_stress + penalty_stress;
+      return stress;
+    }
 
+    // ========================================================================
+    // GETTER FUNCTIONS for separate stress components
+    // ========================================================================
+    double get_base_stress() const {
+      return base_stress;
+    }
+
+    double get_penalty_stress() const {
+      return penalty_stress;
+    }
+
+    double get_total_stress() const {
       return stress;
     }
 
@@ -714,7 +805,13 @@ Rcpp::List ac_relax_coords_with_colbases(
     sr_fixed,
     titer_weights,
     dilution_stepsize,
-    true
+    true,                           // optimize_colbases
+    options.bound_colbases,         // NEW: bound_colbases
+    options.colbase_min_bound,      // NEW: colbase_min_bound
+    options.colbase_max_bound,      // NEW: colbase_max_bound  
+    options.colbase_max_deviation,  // NEW: colbase_max_deviation
+    options.regularize_colbases,    // NEW: regularize_colbases
+    options.colbase_lambda          // NEW: colbase_lambda
   );
 
   arma::mat pars = create_initial_pars(
@@ -744,10 +841,15 @@ Rcpp::List ac_relax_coords_with_colbases(
   ag_coords = map.ag_coords;
   sr_coords = map.sr_coords;
   colbases = map.get_colbases();
-  double final_stress = map.calculate_stress();
+  
+  // Calculate final stress to ensure base_stress and penalty_stress are updated
+  map.calculate_stress();
 
+  // MODIFIED: Return separate stress components
   return Rcpp::List::create(
-    Rcpp::Named("stress") = final_stress,
+    Rcpp::Named("stress") = map.get_total_stress(),           // Total stress (backward compatible)
+    Rcpp::Named("base_stress") = map.get_base_stress(),       // Map fitting stress only
+    Rcpp::Named("penalty_stress") = map.get_penalty_stress(), // Regularization penalty only
     Rcpp::Named("ag_coords") = ag_coords,
     Rcpp::Named("sr_coords") = sr_coords,
     Rcpp::Named("colbases") = colbases
@@ -926,6 +1028,11 @@ void ac_relaxOptimizations_with_colbases(
         optimizations.at(i).set_ag_base_coords(Rcpp::as<arma::mat>(result["ag_coords"]));
         optimizations.at(i).set_sr_base_coords(Rcpp::as<arma::mat>(result["sr_coords"]));
         optimizations.at(i).set_stress(Rcpp::as<double>(result["stress"]));
+        
+        // NEW: Also store base_stress and penalty_stress if needed
+        // Note: You may need to add these fields to AcOptimization class
+        // optimizations.at(i).set_base_stress(Rcpp::as<double>(result["base_stress"]));
+        // optimizations.at(i).set_penalty_stress(Rcpp::as<double>(result["penalty_stress"]));
         
         opt_colbases = Rcpp::as<arma::vec>(result["colbases"]);
         optimizations.at(i).set_fixed_column_bases(opt_colbases, false);
